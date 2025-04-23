@@ -69,3 +69,12 @@ export interface CreateLicenseRequest {
     expires_at?: string | null;
     initial_status?: string | null;
 }
+
+export interface UpdateLicenseRequest {
+    type?: string | null;
+    product_name?: string | null;
+    customer_name?: string | null;
+    customer_email?: string | null;
+    metadata?: any | null;
+    expires_at?: string | null;
+}

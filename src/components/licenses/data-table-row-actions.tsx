@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { EllipsisIcon } from 'lucide-react';
@@ -34,6 +34,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { EditLicenseDialog } from './edit-license-dialog';
 
 const availableStatuses: { value: string; label: string }[] = [
     { value: 'active', label: 'Activate' },
@@ -48,12 +49,16 @@ interface DataTableRowActionsProps {
 export function DataTableRowActions({ license }: DataTableRowActionsProps) {
     const router = useRouter();
     const queryClient = useQueryClient();
-    const [isChangingStatus, setIsChangingStatus] = React.useState(false);
-    const [isRevokeAlertOpen, setIsRevokeAlertOpen] = React.useState(false);
+    const [isChangingStatus, setIsChangingStatus] = useState(false);
+    const [isRevokeAlertOpen, setIsRevokeAlertOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const handleEdit = () => {
-        console.log('Edit license:', license.id);
-        toast.info(`Edit action triggered for license: ${license.license_key}`);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleEditSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: ['licenses'] });
     };
 
     const handleChangeStatus = async (newStatus: string) => {
@@ -164,6 +169,12 @@ export function DataTableRowActions({ license }: DataTableRowActionsProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <EditLicenseDialog
+                license={license}
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                onSuccess={handleEditSuccess}
+            />
         </>
     );
 }
