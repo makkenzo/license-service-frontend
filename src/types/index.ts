@@ -59,3 +59,13 @@ export interface PaginatedLicenseResponse {
     limit: number;
     offset: number;
 }
+
+export interface CreateLicenseRequest {
+    type: string;
+    product_name: string;
+    customer_name?: string | null;
+    customer_email?: string | null;
+    metadata?: any;
+    expires_at?: string | null;
+    initial_status?: string | null;
+}

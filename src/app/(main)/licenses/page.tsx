@@ -2,11 +2,13 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef, PaginationState, SortingState, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
 
 import ErrorDisplay from '@/components/error-display';
+import { CreateLicenseDialog } from '@/components/licenses/create-license-dialog';
+import { DataTableRowActions } from '@/components/licenses/data-table-row-actions';
 import { LicenseDataTable } from '@/components/licenses/license-data-table';
 import { LicenseDataTableToolbar } from '@/components/licenses/license-data-table-toolbar';
 import { Badge } from '@/components/ui/badge';
@@ -107,14 +109,15 @@ export const columns: ColumnDef<LicenseResponse>[] = [
         },
         cell: ({ row }) => new Date(row.getValue('created_at')).toLocaleDateString(),
     },
-    // TODO: Добавить колонку для действий (редактировать, изменить статус и т.д.)
-    //   {
-    //     id: 'actions',
-    //     cell: ({ row }) => {
-    //       const license = row.original;
-    //       // DropdownMenu с действиями
-    //     },
-    //   },
+    {
+        id: 'actions',
+        cell: ({ row }) => {
+            const license = row.original;
+            return <DataTableRowActions license={license} />;
+        },
+        enableSorting: false,
+        enableHiding: false,
+    },
 ];
 
 const LicensesPage = () => {
@@ -125,6 +128,8 @@ const LicensesPage = () => {
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [filters, setFilters] = useState<Partial<ListLicenseParams>>({});
+
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
     const queryParams = useMemo(() => {
         const params: ListLicenseParams = {
@@ -170,28 +175,47 @@ const LicensesPage = () => {
         debugTable: process.env.NODE_ENV === 'development',
     });
 
-    const handleFilterChange = useCallback((newFilters: Partial<ListLicenseParams>) => {
-        setFilters((prevFilters) => {
-            const updated = { ...prevFilters };
+    const queryClient = useQueryClient();
 
-            if (newFilters.status !== undefined) updated.status = newFilters.status || undefined;
-            else delete updated.status;
+    const handleFilterChange = useCallback(
+        (newFilters: Partial<ListLicenseParams>) => {
+            setFilters((prevFilters) => {
+                const updated = { ...prevFilters };
 
-            if (newFilters.email !== undefined) updated.email = newFilters.email || undefined;
-            else delete updated.email;
+                if (newFilters.status !== undefined) updated.status = newFilters.status || undefined;
+                else delete updated.status;
 
-            return updated;
-        });
-    }, []);
+                if (newFilters.email !== undefined) updated.email = newFilters.email || undefined;
+                else delete updated.email;
+
+                return updated;
+            });
+            table.setPageIndex(0);
+        },
+        [table]
+    );
+
+    const invalidateLicenseList = () => {
+        queryClient.invalidateQueries({ queryKey: ['licenses'] });
+    };
 
     return (
         <div className="container mx-auto py-6 space-y-4">
-            <h1 className="text-3xl font-bold">Manage Licenses</h1>
+            <div className="flex items-center justify-between space-x-2">
+                <h1 className="text-3xl font-bold">Manage Licenses</h1>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>Create License</Button>
+            </div>
             <LicenseDataTableToolbar table={table} onFilterChange={handleFilterChange} currentFilters={filters} />
 
             {isError && <ErrorDisplay message={error?.message || 'Failed to load licenses.'} />}
 
             <LicenseDataTable columns={columns} table={table} isLoading={isLoading || isFetching} />
+
+            <CreateLicenseDialog
+                isOpen={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+                onSuccess={invalidateLicenseList}
+            />
         </div>
     );
 };
