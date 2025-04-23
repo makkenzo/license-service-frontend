@@ -1,6 +1,6 @@
 'use client';
 
-import { KeySquare, LayoutDashboard, LogOut } from 'lucide-react';
+import { Key, KeySquare, LayoutDashboard, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 import Link from 'next/link';
@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/auth-store';
 const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/licenses', label: 'Licenses', icon: KeySquare },
+    { href: '/settings/api-keys', label: 'API Keys', icon: Key },
 ];
 
 export default function Sidebar() {

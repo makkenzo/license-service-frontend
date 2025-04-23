@@ -88,3 +88,27 @@ export interface BarChartDataPoint {
     name: string;
     count: number;
 }
+
+export interface CreateAPIKeyRequest {
+    description: string;
+    product_id?: string | null;
+}
+
+export interface CreateAPIKeyResponse {
+    id: string;
+    full_key: string;
+    prefix: string;
+    description: string;
+    product_id?: string;
+    created_at: string;
+}
+
+export interface APIKeyResponse {
+    id: string;
+    prefix: string;
+    description: string;
+    product_id?: string;
+    is_enabled: boolean;
+    created_at: string;
+    last_used_at?: string | null;
+}
