@@ -1,34 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
+import ErrorDisplay from '@/components/error-display';
+import LoadingSpinner from '@/components/loading-spinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardSummary } from '@/services/dashboard-service';
-
-function LoadingSpinner() {
-    return (
-        <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-2">Loading data...</span>
-        </div>
-    );
-}
-
-function ErrorDisplay({ message }: { message: string }) {
-    return (
-        <Card className="bg-destructive/10 border-destructive">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                    <AlertCircle className="h-5 w-5" /> Error Fetching Data
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p>{message}</p>
-            </CardContent>
-        </Card>
-    );
-}
 
 const DashboardPage = () => {
     const { data, error, isLoading, isError } = useQuery({
@@ -120,7 +98,7 @@ const DashboardPage = () => {
                                 {Object.entries(typeCounts).map(([type, count]) => (
                                     <li key={type} className="flex justify-between">
                                         <span>{type}</span>
-                                        <span className="font-medium">{count}</span>
+                                        <span className="font-medium">{count as number}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -140,7 +118,7 @@ const DashboardPage = () => {
                                 {Object.entries(productCounts).map(([product, count]) => (
                                     <li key={product} className="flex justify-between">
                                         <span>{product}</span>
-                                        <span className="font-medium">{count}</span>
+                                        <span className="font-medium">{count as number}</span>
                                     </li>
                                 ))}
                             </ul>
