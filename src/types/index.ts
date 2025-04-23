@@ -78,3 +78,13 @@ export interface UpdateLicenseRequest {
     metadata?: any | null;
     expires_at?: string | null;
 }
+
+export interface PieChartDataPoint {
+    name: string;
+    value: number;
+}
+
+export interface BarChartDataPoint {
+    name: string;
+    count: number;
+}
