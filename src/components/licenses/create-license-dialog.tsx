@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -111,7 +111,6 @@ export function CreateLicenseDialog({ isOpen, onOpenChange, onSuccess }: CreateL
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[525px]">
-                {' '}
                 <DialogHeader>
                     <DialogTitle>Create New License</DialogTitle>
                     <DialogDescription>
@@ -181,7 +180,6 @@ export function CreateLicenseDialog({ isOpen, onOpenChange, onSuccess }: CreateL
                         </div>
 
                         <div className="grid grid-cols-4 items-start gap-4">
-                            {' '}
                             <Label htmlFor="metadata" className="text-right pt-2">
                                 Metadata (JSON)
                             </Label>
@@ -203,33 +201,51 @@ export function CreateLicenseDialog({ isOpen, onOpenChange, onSuccess }: CreateL
                             <Label htmlFor="expires_at" className="text-right">
                                 Expires At
                             </Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant={'outline'}
-                                        className={cn(
-                                            'col-span-3 justify-start text-left font-normal',
-                                            !form.watch('expires_at') && 'text-muted-foreground'
-                                        )}
-                                        disabled={isLoading}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {form.watch('expires_at') ? (
-                                            format(form.watch('expires_at')!, 'PPP')
-                                        ) : (
-                                            <span>Pick a date</span>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                        mode="single"
-                                        selected={form.watch('expires_at')}
-                                        onSelect={(date) => form.setValue('expires_at', date, { shouldValidate: true })}
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
+                            <Controller
+                                control={form.control}
+                                name="expires_at"
+                                render={({ field }) => (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant={'outline'}
+                                                className={cn(
+                                                    'col-span-3 justify-start text-left font-normal',
+                                                    !field.value && 'text-muted-foreground'
+                                                )}
+                                                disabled={isLoading}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                // initialFocus
+                                                disabled={isLoading}
+                                            />
+                                            <div className="p-2 border-t border-border">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="w-full justify-center"
+                                                    onClick={() => field.onChange(undefined)}
+                                                >
+                                                    Clear Date
+                                                </Button>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                            />
+                            {form.formState.errors.expires_at && (
+                                <p className="col-span-4 text-xs text-red-600 text-right">
+                                    {form.formState.errors.expires_at.message}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </form>

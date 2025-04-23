@@ -257,7 +257,7 @@ export function EditLicenseForm({ license, onSubmitSuccess, onCancel }: EditLice
                                 mode="single"
                                 selected={form.watch('expires_at') ?? undefined}
                                 onSelect={(date) => form.setValue('expires_at', date ?? null, { shouldValidate: true })}
-                                initialFocus
+                                // initialFocus
                             />
                             <div className="p-2 border-t border-border">
                                 <Button
