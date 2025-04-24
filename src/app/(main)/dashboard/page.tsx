@@ -3,37 +3,108 @@
 import { useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
+import {
+    Activity,
+    AlertCircle,
+    AlertTriangle,
+    CalendarDays,
+    CheckCircle,
+    Clock,
+    FileText,
+    Package,
+    Type,
+} from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 
-import { BarChartCard } from '@/components/dashboard/bar-chart-card';
-import { PieChartCard } from '@/components/dashboard/pie-chart-card';
 import ErrorDisplay from '@/components/error-display';
 import LoadingSpinner from '@/components/loading-spinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    type ChartConfig,
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
 import { getDashboardSummary } from '@/services/dashboard-service';
-import { BarChartDataPoint, PieChartDataPoint } from '@/types';
+
+interface ChartDataPoint {
+    name: string;
+    value: number;
+}
+
+interface NextToExpireInfo {
+    licenseKey: string;
+    expiresAt: string;
+    productName: string;
+}
 
 const DashboardPage = () => {
     const { data, error, isLoading, isError } = useQuery({
         queryKey: ['dashboardSummary'],
         queryFn: getDashboardSummary,
-        staleTime: 1000 * 60 * 1,
     });
 
     const statusChartData = useMemo(() => {
         if (!data?.statusCounts) return [];
-        return Object.entries(data.statusCounts).map(([name, value]) => ({ name, value }));
+        return Object.entries(data.statusCounts).map(([name, value]) => ({
+            name: name,
+            label: name.charAt(0).toUpperCase() + name.slice(1),
+            value: value,
+        }));
     }, [data?.statusCounts]);
 
     const typeChartData = useMemo(() => {
         if (!data?.typeCounts) return [];
-        return Object.entries(data.typeCounts).map(([name, value]) => ({ name, value }));
+        return Object.entries(data.typeCounts).map(([name, value]) => ({
+            name: name,
+            label: name,
+            value: value,
+        }));
     }, [data?.typeCounts]);
 
     const productChartData = useMemo(() => {
         if (!data?.productCounts) return [];
-        return Object.entries(data.productCounts).map(([name, count]) => ({ name, count }));
+        return Object.entries(data.productCounts).map(([name, count]) => ({
+            name: name,
+            label: name,
+            value: count,
+        }));
     }, [data?.productCounts]);
+
+    const statusChartConfig = useMemo(() => {
+        const config: ChartConfig = {};
+        statusChartData.forEach((item, index) => {
+            config[item.name] = {
+                label: item.label,
+                color: `var(--chart-${(index % 5) + 1})`,
+            };
+        });
+        return config;
+    }, [statusChartData]);
+
+    const typeChartConfig = useMemo(() => {
+        const config: ChartConfig = {};
+        typeChartData.forEach((item, index) => {
+            config[item.name] = {
+                label: item.label,
+                color: `var(--chart-${(index % 5) + 1})`,
+            };
+        });
+        return config;
+    }, [typeChartData]);
+
+    const productChartConfig = useMemo(() => {
+        const config: ChartConfig = {};
+        productChartData.forEach((item, index) => {
+            config[item.name] = {
+                label: item.label,
+                color: `var(--chart-${(index % 5) + 1})`,
+            };
+        });
+        return config;
+    }, [productChartData]);
 
     if (isLoading && !data) {
         return (
@@ -41,12 +112,15 @@ const DashboardPage = () => {
                 <h1 className="text-3xl font-bold">Dashboard</h1>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {[...Array(4)].map((_, i) => (
-                        <Card key={i} className="h-[126px] animate-pulse bg-muted"></Card>
+                        <Card key={i} className="h-[126px] animate-pulse bg-muted/50" />
                     ))}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Card className="h-[380px] animate-pulse bg-muted"></Card>
-                    <Card className="h-[380px] animate-pulse bg-muted"></Card>
+                    <Card className="h-[380px] animate-pulse bg-muted/50" />
+                    <Card className="h-[380px] animate-pulse bg-muted/50" />
+                </div>
+                <div className="grid gap-4">
+                    <Card className="h-[150px] animate-pulse bg-muted/50" />
                 </div>
             </div>
         );
@@ -60,7 +134,7 @@ const DashboardPage = () => {
         totalLicenses: 0,
         statusCounts: {},
         typeCounts: {},
-        expiringSoon: { count: 0, periodDays: 30 },
+        expiringSoon: { count: 0, periodDays: 30, nextToExpire: undefined as NextToExpireInfo | undefined },
         productCounts: {},
     };
 
@@ -81,7 +155,6 @@ const DashboardPage = () => {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
 
-            {/* Статистика KPI карточками */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -90,9 +163,9 @@ const DashboardPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summary.totalLicenses}</div>
-                        <p className="text-xs text-muted-foreground">Total registered licenses</p>
                     </CardContent>
                 </Card>
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Licenses</CardTitle>
@@ -100,9 +173,9 @@ const DashboardPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summary.statusCounts['active'] || 0}</div>
-                        <p className="text-xs text-muted-foreground">Currently active licenses</p>
                     </CardContent>
                 </Card>
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Expired Licenses</CardTitle>
@@ -110,9 +183,9 @@ const DashboardPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summary.statusCounts['expired'] || 0}</div>
-                        <p className="text-xs text-muted-foreground">Licenses past expiration</p>
                     </CardContent>
                 </Card>
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
@@ -120,36 +193,129 @@ const DashboardPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summary.expiringSoon.count}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Expiring within {summary.expiringSoon.periodDays} days
-                        </p>
                     </CardContent>
                 </Card>
             </div>
+
             <div className="grid gap-4 md:grid-cols-2">
-                <PieChartCard
-                    title="Licenses by Status"
-                    data={statusChartData as PieChartDataPoint[]}
-                    isLoading={isLoading}
-                    colors={['#22c55e', '#f97316', '#64748b', '#ef4444', '#a855f7', '#3b82f6']}
-                />
-                <PieChartCard
-                    title="Licenses by Type"
-                    data={typeChartData as PieChartDataPoint[]}
-                    isLoading={isLoading}
-                />
-                <BarChartCard
-                    title="Licenses by Product"
-                    data={productChartData as BarChartDataPoint[]}
-                    isLoading={isLoading}
-                    barColor="#3b82f6"
-                    className="col-span-2"
-                />
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-muted-foreground" /> License Status Distribution
+                        </CardTitle>
+                        <CardDescription>Overview of license states</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {statusChartData.length > 0 ? (
+                            <ChartContainer config={statusChartConfig} className="mx-auto aspect-square h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                    <Pie data={statusChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                        {statusChartData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={`var(--color-${entry.name})`} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend
+                                        content={<ChartLegendContent nameKey="name" />}
+                                        verticalAlign="bottom"
+                                        height={40}
+                                    />
+                                </PieChart>
+                            </ChartContainer>
+                        ) : (
+                            <div className="flex justify-center items-center h-[250px] text-muted-foreground">
+                                No status data.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Type className="h-5 w-5 text-muted-foreground" /> License Type Distribution
+                        </CardTitle>
+                        <CardDescription>Breakdown by license type</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {typeChartData.length > 0 ? (
+                            <ChartContainer config={typeChartConfig} className="mx-auto aspect-square h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip content={<ChartTooltipContent nameKey="label" hideLabel />} />
+                                    <Pie data={typeChartData} dataKey="value" nameKey="name" innerRadius={60}>
+                                        {typeChartData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={`var(--color-${entry.name})`} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend
+                                        content={<ChartLegendContent nameKey="label" />}
+                                        verticalAlign="bottom"
+                                        height={40}
+                                    />
+                                </PieChart>
+                            </ChartContainer>
+                        ) : (
+                            <div className="flex justify-center items-center h-[250px] text-muted-foreground">
+                                No type data.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
+
+            <div className="grid gap-4">
+                {' '}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-muted-foreground" /> Licenses by Product
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {productChartData.length > 0 ? (
+                            <ChartContainer config={productChartConfig} className="h-[300px] w-full">
+                                <BarChart
+                                    accessibilityLayer
+                                    data={productChartData}
+                                    layout="vertical"
+                                    margin={{ left: 20, top: 5, right: 5, bottom: 5 }}
+                                >
+                                    <CartesianGrid horizontal={false} />
+                                    <YAxis
+                                        dataKey="label"
+                                        type="category"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={5}
+                                        width={120}
+                                    />
+                                    <XAxis dataKey="value" type="number" hide />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent indicator="line" nameKey="label" hideLabel />}
+                                    />
+                                    <Bar dataKey="value" layout="vertical" radius={4}>
+                                        {productChartData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={`var(--color-${entry.name})`} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ChartContainer>
+                        ) : (
+                            <div className="flex justify-center items-center h-[300px] text-muted-foreground">
+                                No product data.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
             {summary.expiringSoon.nextToExpire && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Next License to Expire</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <CalendarDays className="h-5 w-5 text-muted-foreground" /> Next License to Expire
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm space-y-1">
                         <p>

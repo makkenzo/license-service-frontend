@@ -172,7 +172,6 @@ const LicensesPage = () => {
         meta: {
             totalRowCount: data?.totalCount,
         },
-        debugTable: process.env.NODE_ENV === 'development',
     });
 
     const queryClient = useQueryClient();
