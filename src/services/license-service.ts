@@ -29,7 +29,6 @@ export const createLicense = async (data: CreateLicenseRequest): Promise<License
 
 export const updateLicense = async (id: string, data: UpdateLicenseRequest): Promise<LicenseResponse> => {
     try {
-        // Используем PATCH для частичного обновления
         const response = await apiClient.patch<LicenseResponse>(`/licenses/${id}`, data);
         return response.data;
     } catch (error: any) {
