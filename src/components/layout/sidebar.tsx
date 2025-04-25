@@ -1,15 +1,14 @@
 'use client';
 
 import { Key, KeySquare, LayoutDashboard, LogOut } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/store/auth-store';
 
 const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,13 +18,13 @@ const navItems = [
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const clearAuth = useAuthStore((state) => state.clearAuth);
-    const router = useRouter();
 
-    const handleLogout = () => {
-        clearAuth();
-        toast.success('You have been logged out.');
-        router.push('/login');
+    const handleLogout = async () => {
+        try {
+            await signOut({ callbackUrl: '/login' });
+        } catch (error) {
+            toast.error('Failed to logo ut.');
+        }
     };
 
     return (

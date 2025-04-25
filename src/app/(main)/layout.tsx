@@ -2,51 +2,46 @@
 
 import { useEffect, useState } from 'react';
 
+import { useSession } from 'next-auth/react';
+
 import { useRouter } from 'next/navigation';
 
 import Sidebar from '@/components/layout/sidebar';
-import { useAuthStore } from '@/store/auth-store';
+import LoadingSpinner from '@/components/loading-spinner';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const { data: session, status } = useSession();
     const router = useRouter();
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const isLoading = status === 'loading';
+    const isAuthenticated = status === 'authenticated';
 
     useEffect(() => {
-        const checkAuth = () => {
-            const authenticated = useAuthStore.getState().isAuthenticated;
-            if (!authenticated) {
-                router.replace('/login');
-            } else {
-                setIsCheckingAuth(false);
-            }
-        };
-
-        const persistedState = useAuthStore.persist
-            .getOptions()
-            .storage?.getItem(useAuthStore.persist.getOptions().name || '');
-        if (!persistedState) {
-            checkAuth();
-        } else {
-            const timer = setTimeout(() => {
-                checkAuth();
-            }, 50);
-            return () => clearTimeout(timer);
+        if (!isLoading && !isAuthenticated) {
+            console.log('ProtectedLayout: Not authenticated, redirecting to /login');
+            router.replace('/login');
         }
-    }, [router]);
+    }, [isLoading, isAuthenticated, router]);
 
-    if (isCheckingAuth && !isAuthenticated) {
-        return <div className="flex min-h-screen items-center justify-center">Loading authentication...</div>;
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        );
     }
 
-    return (
-        <div className="flex min-h-screen w-full bg-muted/40">
-            <Sidebar />
-            <div className="flex flex-col flex-1">
-                <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8">
-                    <div className="pt-6">{children}</div>
-                </main>
+    if (isAuthenticated) {
+        return (
+            <div className="flex min-h-screen w-full bg-muted/40">
+                <Sidebar />
+                <div className="flex flex-col flex-1">
+                    <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8">
+                        <div className="pt-6">{children}</div>
+                    </main>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
+
+    return null;
 }

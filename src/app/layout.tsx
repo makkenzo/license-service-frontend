@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import ReactQueryProvider from '@/components/providers/react-query-provider';
+import NextAuthProvider from '@/components/providers/session-provider';
 import { Toaster } from '@/components/ui/sonner';
 
 import './globals.css';
@@ -30,9 +31,11 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ReactQueryProvider>
-                    {children} <Toaster richColors position="top-right" />
-                </ReactQueryProvider>
+                <NextAuthProvider>
+                    <ReactQueryProvider>
+                        {children} <Toaster richColors position="top-right" />
+                    </ReactQueryProvider>
+                </NextAuthProvider>
             </body>
         </html>
     );
